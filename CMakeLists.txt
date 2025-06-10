@@ -44,8 +44,14 @@ else()
 	add_library(${PLUGIN_NAME} SHARED ${SRC_FILES})
 endif()
 
+# Libraries and compiler options
 target_compile_features(${PLUGIN_NAME} PUBLIC cxx_auto_type cxx_generalized_initializers cxx_std_17)
-target_include_directories(${PLUGIN_NAME} PUBLIC ${GUI_BASE_DIR}/JuceLibraryCode ${GUI_BASE_DIR}/JuceLibraryCode/modules ${GUI_BASE_DIR}/Plugins/Headers ${GUI_COMMONLIB_DIR}/include)
+target_include_directories(${PLUGIN_NAME} PUBLIC
+    ${GUI_BASE_DIR}/JuceLibraryCode
+    ${GUI_BASE_DIR}/JuceLibraryCode/modules
+    ${GUI_BASE_DIR}/Plugins/Headers
+    ${GUI_COMMONLIB_DIR}/include
+)
 
 set(GUI_BIN_DIR ${GUI_BASE_DIR}/Build/${CONFIGURATION_FOLDER})
 
@@ -60,6 +66,7 @@ endif()
 #Libraries and compiler options
 if(MSVC)
 	target_link_libraries(${PLUGIN_NAME} ${GUI_BIN_DIR}/open-ephys.lib)
+	# For Windows builds, SparkFun/Wire APIs are stubbed out in code (no extra libs)
 	target_compile_options(${PLUGIN_NAME} PRIVATE /sdl- /W0)
 	
 	install(TARGETS ${PLUGIN_NAME} RUNTIME DESTINATION ${GUI_BIN_DIR}/plugins  CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES})
@@ -73,6 +80,14 @@ elseif(LINUX)
 	target_compile_options(${PLUGIN_NAME} PRIVATE -O3) #enable optimization for linux debug
 	
 	install(TARGETS ${PLUGIN_NAME} LIBRARY DESTINATION ${GUI_BIN_DIR}/plugins)
+	# Include Arduino Wire and SparkFun ICM-20948 library on Linux
+	target_include_directories(${PLUGIN_NAME} PRIVATE
+		${CMAKE_CURRENT_SOURCE_DIR}/libs/SparkFun_ICM_20948_Arduino_Library/src
+	)
+	target_link_libraries(${PLUGIN_NAME} PRIVATE
+		SparkFun_ICM_20948_Arduino_Library
+		i2c-dev
+	)
 elseif(APPLE)
 	set_target_properties(${PLUGIN_NAME} PROPERTIES BUNDLE TRUE)
 	set_property(TARGET ${PLUGIN_NAME} APPEND_STRING PROPERTY LINK_FLAGS
@@ -80,6 +95,13 @@ elseif(APPLE)
 
 	install(TARGETS ${PLUGIN_NAME} DESTINATION $ENV{HOME}/Library/Application\ Support/open-ephys/plugins-api8)
 	set(CMAKE_PREFIX_PATH /opt/local)
+	# Include Arduino Wire and SparkFun ICM-20948 library on macOS (if installed)
+	target_include_directories(${PLUGIN_NAME} PRIVATE
+		${CMAKE_CURRENT_SOURCE_DIR}/libs/SparkFun_ICM_20948_Arduino_Library/src
+	)
+	target_link_libraries(${PLUGIN_NAME} PRIVATE
+		SparkFun_ICM_20948_Arduino_Library
+	)
 endif()
 
 #create filters for vs and xcode

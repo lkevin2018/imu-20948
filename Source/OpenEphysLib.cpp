@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <PluginInfo.h>
 
-#include "ProcessorPlugin.h"
+#include "IMU20948.h"
 #include <string>
 
 #ifdef WIN32
@@ -34,42 +34,38 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace Plugin;
 
-#define NUM_PLUGINS 1
+#define NUM_PLUGINS 2
 
 extern "C" EXPORT void getLibInfo(Plugin::LibraryInfo* info)
 {
-	/* API version, defined by the GUI source.
-	Should not be changed to ensure it is always equal to the one used in the latest codebase.
-	The GUI refueses to load plugins with mismatched API versions */
-	info->apiVersion = PLUGIN_API_VER;
-	info->name = "Plugin Library Name"; // <---- update
-	info->libVersion = "0.1.0"; // <---- update
-	info->numPlugins = NUM_PLUGINS;
+    info->apiVersion = PLUGIN_API_VER;
+    info->name = "ICM-20948 Plugin Library"; // set library name for IMU plugin
+    info->libVersion = "0.1.0";
+    info->numPlugins = NUM_PLUGINS;
 }
 
 extern "C" EXPORT int getPluginInfo(int index, Plugin::PluginInfo* info)
 {
-	switch (index)
-	{
-		//one case per plugin. This example is for a processor which connects directly to the signal chain
-	case 0:
-		//Type of plugin. See "Source/Processors/PluginManager/OpenEphysPlugin.h" for complete info about the different type structures
-		info->type = Plugin::Type::PROCESSOR;
-
-		//Processor name
-		info->processor.name = "Plugin Name"; //Processor name shown in the GUI
-
-		//Type of processor. Can be FILTER, SOURCE, SINK or UTILITY. Specifies where on the processor list will appear
-		info->processor.type = Processor::Type::FILTER;
-
-		//Class factory pointer. Replace "ProcessorPluginSpace::ProcessorPlugin" with the namespace and class name.
-		info->processor.creator = &(Plugin::createProcessor<ProcessorPlugin>);
-		break;
-	default:
-		return -1;
-		break;
-	}
-	return 0;
+    switch (index)
+    {
+    case 0:
+        // IMUReader legacy serial-to-CSV plugin
+        info->type = Plugin::Type::PROCESSOR;
+        info->processor.name = "IMU Reader";
+        info->processor.type = Processor::Type::SOURCE;
+        info->processor.creator = &(Plugin::createProcessor<IMUReader>);
+        break;
+    case 1:
+        // ICM-20948 sensor plugin
+        info->type = Plugin::Type::PROCESSOR;
+        info->processor.name = "ICM-20948";
+        info->processor.type = Processor::Type::SOURCE;
+        info->processor.creator = &(Plugin::createProcessor<IMU20948>);
+        break;
+    default:
+        return -1;
+    }
+    return 0;
 }
 
 #ifdef WIN32

@@ -23,17 +23,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PROCESSORPLUGIN_H_DEFINED
 #define PROCESSORPLUGIN_H_DEFINED
 
-#include <ProcessorHeaders.h>
+#include <IMU20948.h>
+#include <SparkFun_ICM_20948_Arduino_Library.h>
 
 
-class ProcessorPlugin : public GenericProcessor
+class IMU20948 : public GenericProcessor
 {
 public:
 	/** The class constructor, used to initialize any members. */
-	ProcessorPlugin();
+	IMU20948();
 
 	/** The class destructor, used to deallocate memory */
-	~ProcessorPlugin();
+	~IMU20948();
 
 	/** If the processor has a custom editor, this method must be defined to instantiate it. */
 	AudioProcessorEditor* createEditor() override;
@@ -71,6 +72,19 @@ public:
 		Parameter objects*/
 	void loadCustomParametersFromXml(XmlElement* parentElement) override;
 
+private:
+	// SparkFun ICM-20948 sensor instance
+	ICM_20948 imuSensor;
+
+	static constexpr int NUM_IMU_CHANNELS = 9; // AccelX,Y,Z, GyroX,Y,Z, MagX,Y,Z
+	int channelIndices[NUM_IMU_CHANNELS];
+	float imuData[NUM_IMU_CHANNELS] = {0};
+	bool imuInitialized = false;
+
+	/** Initialize the IMU sensor. */
+	bool initSensor();
+	/** Read a new sample from the IMU. Returns true if data updated. */
+	bool readSensorData();
 };
 
 #endif
